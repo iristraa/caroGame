@@ -26,7 +26,7 @@ void gameUI::mainMenuLayer()
     int selected = 0;
     std::vector<std::string> menu_entries = {
         "Play",
-        "Option B",
+        "Settings",
         "About",
         "Quit"
     };
@@ -110,9 +110,11 @@ void gameUI::aboutLayer()
         return vbox({
             text("About this game") | center,
             separator(),
-            paragraph("Press the arrow keys to control the UI elements!\n"),
+            paragraph("Press the arrow keys to select the UI elements.\n"),
             text(""),
-            paragraph("Try to beat the highscore!"),
+            paragraph("Press Enter to confirm selection.\n"),
+            text(""),
+            paragraph("Press \"q\" to exit the game menu, press \"r\" to restart the board.\n"),
             text("") | flex,
             separator(),
             menu->Render(),
