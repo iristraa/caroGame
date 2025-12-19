@@ -4,6 +4,11 @@ caroLogic::caroLogic() {
 
 }
 
+void caroLogic::getBoardSize(int boardRow, int boardCol) {
+	m_BoardRow = boardRow;
+	m_BoardCol = boardCol;
+}
+
 void caroLogic::resetBoard() {
 	m_Board.clear();
 
@@ -13,10 +18,10 @@ void caroLogic::resetBoard() {
 void caroLogic::initBoard() {
 	resetBoard();
 
-	m_Board.resize(8, std::vector<int>(8));
+	m_Board.resize(m_BoardRow, std::vector<int>(m_BoardCol));
 
-	for (int i = 0; i < 8; ++i) {
-		for (int j = 0; j < 8; ++j) {
+	for (int i = 0; i < m_BoardRow; ++i) {
+		for (int j = 0; j < m_BoardCol; ++j) {
 			m_Board[i][j] = 0;
 		}
 	}
@@ -48,7 +53,7 @@ playerState caroLogic::getTurn() {
 int caroLogic::countInDirection(int row, int col, int drow, int dcol, int player) {
 	int count = 0;
 	
-	while (row >= 0 && row < 8 && col >= 0 && col < 8 && m_Board[row][col] == player) {
+	while (row >= 0 && row < m_BoardRow && col >= 0 && col < m_BoardCol && m_Board[row][col] == player) {
 		++count;
 		row += drow;
 		col += dcol;
@@ -67,8 +72,8 @@ bool caroLogic::isWinner(int player, int k) {
 		{1, -1}
 	};
 
-	for (int i = 0; i < 8; ++i) {
-		for (int j = 0; j < 8; ++j) {
+	for (int i = 0; i < m_BoardRow; ++i) {
+		for (int j = 0; j < m_BoardCol; ++j) {
 			if (m_Board[i][j] == 0) continue;
 
 			for (auto& d : direction) {
@@ -85,8 +90,8 @@ bool caroLogic::isWinner(int player, int k) {
 }
 
 bool caroLogic::isDraw() {
-	for (int i = 0; i < 8; ++i) {
-		for (int j = 0; j < 8; ++j) {
+	for (int i = 0; i < m_BoardRow; ++i) {
+		for (int j = 0; j < m_BoardCol; ++j) {
 			if (m_Board[i][j] == 0) return false;
 		}
 	}

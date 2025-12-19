@@ -38,6 +38,7 @@ void gameUI::mainMenuLayer()
             m_Screen.Exit();
         }
         else if (menu_entries[selected] == "Play") {
+            m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum);
             m_pCaroLogic->initBoard();
             m_State = appState::INGAME;
             m_Screen.Exit();
@@ -129,9 +130,11 @@ void gameUI::aboutLayer()
 
 void gameUI::playLayer()
 {
-    std::vector<std::vector<Component>> grid(m_RowNum, std::vector<Component>(m_ColNum));
-
     caroState curGamestate = m_pCaroLogic->gameState();
+
+    m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum);
+
+    std::vector<std::vector<Component>> grid(m_RowNum, std::vector<Component>(m_ColNum));
 
     for (int i = 0; i < m_RowNum; ++i) {
         for (int j = 0; j < m_ColNum; ++j) {
@@ -175,8 +178,45 @@ void gameUI::playLayer()
         return vbox(std::move(rows)) | border;
         });
 
+    auto saveInput = Input(&m_SaveFileName, "Please type the save file name...");
+
+    auto logicLayer = Container::Vertical({
+        mainContainer,
+        saveInput
+        });
+
     // maintain row position
-    mainContainer = CatchEvent(mainContainer, [&](Event e) {
+    logicLayer = CatchEvent(logicLayer, [&](Event e) {
+
+        if (m_IsSaving) {
+            if (e == Event::Return) {
+                if (m_SaveFileName.empty()) m_SaveNotif = "Error: Filename cannot be empty!";
+                else {
+                    // save function here
+
+                    m_SaveNotif = "Game saved to " + m_SaveFileName + " successfully!";
+                    m_IsSaving = false;
+                    m_SaveFileName = "";
+                }
+                return true;
+            }
+            
+            if (e == Event::Escape) {
+                m_IsSaving = false;
+                m_SaveNotif = "Save cancelled.";
+                m_SaveFileName = "";
+                return true;
+            }
+
+            return saveInput->OnEvent(e);
+        }
+
+        if (e == Event::Character('l')) {
+            m_IsSaving = true;
+            m_SaveNotif = "";
+            return true;
+        }
+
         if (curGamestate == caroState::ONGOING) {
             if (e == Event::ArrowRight) {
                 focusCol = (focusCol + 1) % m_ColNum;
@@ -194,12 +234,12 @@ void gameUI::playLayer()
                 focusRow = (focusRow - 1 + m_RowNum) % m_RowNum;
                 return true;
             }
-        }
 
-        // Forward Enter to the selected button
-        if (e == Event::Return || e == Event::Character(' ')) {
-            grid[focusRow][focusCol]->OnEvent(Event::Return);
-            return true;
+            // Forward Enter to the selected button
+            if (e == Event::Return || e == Event::Character(' ')) {
+                grid[focusRow][focusCol]->OnEvent(Event::Return);
+                return true;
+            }
         }
 
         if (e == Event::Character('q')) {
@@ -215,7 +255,7 @@ void gameUI::playLayer()
         }
 
         return false;
-        });
+    });
 
     auto gameMessageFormat = [&](const std::string& message) {
         auto textBefore = text(message);
@@ -230,7 +270,7 @@ void gameUI::playLayer()
             });
 
         return container;
-        };
+    };
 
     if (curGamestate == caroState::PLAYER_ONE_WINS) m_Message = "Player 1 (X) wins! Press \"r\" to reset board";
     else if (curGamestate == caroState::PLAYER_TWO_WINS) m_Message = "Player 2 (O) wins! Press \"r\" to reset board";
@@ -240,10 +280,27 @@ void gameUI::playLayer()
         else if (m_pCaroLogic->getTurn() == playerState::PLAYER_TWO) m_Message = "Player 2's turn! Please make a move";
     }
 
-    auto playScreenRender = Renderer(mainContainer, [&] {
+    auto playScreenRender = Renderer(logicLayer, [&] {
+        Element saveArea;
+        if (m_IsSaving) {
+            saveArea = hbox({
+                text("Save file: "),
+                saveInput->Render() | flex
+            }) | border | color(Color::Yellow);
+        }
+        else {
+            if (!m_SaveNotif.empty()) {
+                saveArea = text(m_SaveNotif) | center | color(Color::Green);
+            }
+            else {
+                saveArea = text("Press \"l\" to save game, press \"q\" to exit") | center | dim;
+            }
+        }
+
         return vbox({
             gameMessageFormat(m_Message) | hcenter,
-            mainContainer->Render() | center | flex
+            mainContainer->Render() | center | flex,
+            saveArea
             }) | borderHeavy;
         });
 

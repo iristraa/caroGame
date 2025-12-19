@@ -21,6 +21,7 @@ class caroLogic {
 public:
 	caroLogic();
 
+	void getBoardSize(int, int);
 	void initBoard();
 	void resetBoard();
 	bool setCell(int, int);
@@ -29,6 +30,8 @@ public:
 
 	caroState gameState();
 
+
+
 	// playerState m_Turn = playerState::PLAYER_ONE;
 private:
 	bool isWinner(int, int);
@@ -36,6 +39,9 @@ private:
 	int countInDirection(int, int, int, int, int);
 private:
 	std::vector<std::vector<int>> m_Board;
+
+	int m_BoardRow = 0;
+	int m_BoardCol = 0;
 
 	playerState m_Turn = playerState::PLAYER_ONE;
 };

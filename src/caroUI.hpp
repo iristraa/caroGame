@@ -52,5 +52,9 @@ private:
 
 	std::string m_Message;
 
+	bool m_IsSaving = false;
+	std::string m_SaveFileName = "";
+	std::string m_SaveNotif = "";
+
 	std::unique_ptr<caroLogic> m_pCaroLogic = std::make_unique<caroLogic>();
 };
