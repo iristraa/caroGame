@@ -23,6 +23,7 @@ using namespace ftxui;
 enum class appState {
 	MAIN_MENU,
 	ABOUT,
+	SETTINGS,
 	INGAME
 };
 

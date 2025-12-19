@@ -133,14 +133,6 @@ void gameUI::playLayer()
 
     caroState curGamestate = m_pCaroLogic->gameState();
 
-    if (curGamestate == caroState::PLAYER_ONE_WINS) m_Message = "Player 1 (X) wins! Press \"r\" to reset board";
-    else if (curGamestate == caroState::PLAYER_TWO_WINS) m_Message = "Player 2 (O) wins! Press \"r\" to reset board";
-    else if (curGamestate == caroState::DRAW) m_Message = "Both players draw!";
-    else {
-        if (m_pCaroLogic->getTurn() == playerState::PLAYER_ONE) m_Message = "Player 1's turn! Please make a move";
-        else if (m_pCaroLogic->getTurn() == playerState::PLAYER_TWO) m_Message = "Player 2's turn! Please make a move";
-    }
-
     for (int i = 0; i < m_RowNum; ++i) {
         for (int j = 0; j < m_ColNum; ++j) {
             int curCell = m_pCaroLogic->getCell(i, j);
@@ -182,8 +174,6 @@ void gameUI::playLayer()
         }
         return vbox(std::move(rows)) | border;
         });
-
-    mainContainer |= center;
 
     // maintain row position
     mainContainer = CatchEvent(mainContainer, [&](Event e) {
@@ -227,10 +217,34 @@ void gameUI::playLayer()
         return false;
         });
 
+    auto gameMessageFormat = [&](const std::string& message) {
+        auto textBefore = text(message);
+
+        if (m_pCaroLogic->getTurn() == playerState::PLAYER_ONE && curGamestate == caroState::ONGOING) textBefore |= color(Color::Blue);
+        else if (m_pCaroLogic->getTurn() == playerState::PLAYER_TWO && curGamestate == caroState::ONGOING) textBefore |= color(Color::Red);
+
+        auto container = hbox({
+            filler(),
+            textBefore,
+            filler()
+            });
+
+        return container;
+        };
+
+    if (curGamestate == caroState::PLAYER_ONE_WINS) m_Message = "Player 1 (X) wins! Press \"r\" to reset board";
+    else if (curGamestate == caroState::PLAYER_TWO_WINS) m_Message = "Player 2 (O) wins! Press \"r\" to reset board";
+    else if (curGamestate == caroState::DRAW) m_Message = "Both players draw!";
+    else {
+        if (m_pCaroLogic->getTurn() == playerState::PLAYER_ONE) m_Message = "Player 1's turn! Please make a move";
+        else if (m_pCaroLogic->getTurn() == playerState::PLAYER_TWO) m_Message = "Player 2's turn! Please make a move";
+    }
+
     auto playScreenRender = Renderer(mainContainer, [&] {
-        return window(text(m_Message) | center,
-            mainContainer->Render() | center
-            );
+        return vbox({
+            gameMessageFormat(m_Message) | hcenter,
+            mainContainer->Render() | center | flex
+            }) | borderHeavy;
         });
 
     m_Screen.Loop(playScreenRender);
