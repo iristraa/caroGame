@@ -238,6 +238,8 @@ void gameUI::playLayer()
 {
     caroState curGamestate = m_pCaroLogic->gameState();
 
+    if (curGamestate != caroState::ONGOING) audioResult = ma_engine_play_sound(&audioEngine, "Resources/achievement.wav", NULL);
+
     m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum, m_kValue);
 
     std::vector<std::vector<Component>> grid(m_RowNum, std::vector<Component>(m_ColNum));
@@ -413,6 +415,7 @@ void gameUI::playLayer()
 
         if (m_pCaroLogic->getTurn() == playerState::PLAYER_ONE && curGamestate == caroState::ONGOING) textBefore |= color(Color::Blue);
         else if (m_pCaroLogic->getTurn() == playerState::PLAYER_TWO && curGamestate == caroState::ONGOING) textBefore |= color(Color::Red);
+        else textBefore |= color(Color::Green);
 
         auto container = hbox({
             text("Turn: " + std::to_string(m_pCaroLogic->getTurnsTaken())),
