@@ -15,7 +15,7 @@ std::string gameUI::getTitleScreen()
 {
     std::ifstream file("Resources/title.txt");
     if (!file) {
-        std::cerr << "Error: Could not open input.txt\n";
+        std::cerr << "Error: Could not open title.txt\n";
         return std::filesystem::current_path().string();
     }
 
@@ -154,6 +154,7 @@ void gameUI::playLayer()
                 // m_State = appState::MAIN_MENU;
                 
                 // m_Message = "Message: Row " + std::to_string(focusRow + 1) + " Column " + std::to_string(focusCol + 1) + " Selected!";
+                m_SaveNotif = "";
                 m_pCaroLogic->setCell(focusRow, focusCol);
                 m_Screen.ExitLoopClosure()();
             });
@@ -199,11 +200,16 @@ void gameUI::playLayer()
             if (e == Event::Return) {
                 if (m_SaveFileName.empty()) m_SaveNotif = "Error: Filename cannot be empty!";
                 else {
-                    m_pCaroLogic->saveState(m_SaveDirectory / m_SaveFileName);
-
-                    m_SaveNotif = "Game saved to " + m_SaveFileName + " successfully!";
-                    m_IsSaving = false;
-                    m_SaveFileName = "";
+                    if (m_pCaroLogic->saveState(m_SaveDirectory / m_SaveFileName) == -1) {
+                        m_SaveNotif = "Error: Cannot open file!";
+                        m_IsSaving = false;
+                        m_SaveFileName = "";
+                    }
+                    else {
+                        m_SaveNotif = "Game saved to \"" + m_SaveFileName + "\" successfully!";
+                        m_IsSaving = false;
+                        m_SaveFileName = "";
+                    }
                 }
                 return true;
             }
@@ -218,8 +224,48 @@ void gameUI::playLayer()
             return saveInput->OnEvent(e);
         }
 
-        if (e == Event::Character('l')) {
+        if (e == Event::Character('l') || e == Event::Character('L')) {
             m_IsSaving = true;
+            m_SaveNotif = "";
+            return true;
+        }
+
+        if (m_IsLoading) {
+            if (e == Event::Return) {
+                if (m_SaveFileName.empty()) m_SaveNotif = "Error: Filename cannot be empty!";
+                else {
+                    if (m_pCaroLogic->loadState(m_SaveDirectory / m_SaveFileName) == -1) {
+                        m_SaveNotif = "Error: Cannot open file!";
+                        m_IsLoading = false;
+                        m_SaveFileName = "";
+                    }
+                    else if (m_pCaroLogic->loadState(m_SaveDirectory / m_SaveFileName) == -2) {
+                        m_SaveNotif = "Something went seriously wrong...";
+                        m_IsLoading = false;
+                        m_SaveFileName = "";
+                    }
+                    else {
+                        m_SaveNotif = "Game loaded from \"" + m_SaveFileName + "\" successfully!";
+                        m_IsLoading = false;
+                        m_SaveFileName = "";
+                        m_Screen.ExitLoopClosure()();
+                    }
+                }
+                return true;
+            }
+
+            if (e == Event::Escape) {
+                m_IsLoading = false;
+                m_SaveNotif = "Load cancelled.";
+                m_SaveFileName = "";
+                return true;
+            }
+
+            return saveInput->OnEvent(e);
+        }
+
+        if (e == Event::Character('t') || e == Event::Character('T')) {
+            m_IsLoading = true;
             m_SaveNotif = "";
             return true;
         }
@@ -249,13 +295,13 @@ void gameUI::playLayer()
             }
         }
 
-        if (e == Event::Character('q')) {
+        if (e == Event::Character('q') || e == Event::Character('Q')) {
             m_State = appState::MAIN_MENU;
             m_Screen.ExitLoopClosure()();
             return true;
         }
 
-        if (e == Event::Character('r')) {
+        if (e == Event::Character('r') || e == Event::Character('R')) {
             m_pCaroLogic->initBoard();
             m_Screen.ExitLoopClosure()();
             return true;
@@ -271,9 +317,9 @@ void gameUI::playLayer()
         else if (m_pCaroLogic->getTurn() == playerState::PLAYER_TWO && curGamestate == caroState::ONGOING) textBefore |= color(Color::Red);
 
         auto container = hbox({
-            filler(),
+            text("Turn: " + std::to_string(m_pCaroLogic->getTurnsTaken())),
+            separator(),
             textBefore,
-            filler()
             });
 
         return container;
@@ -295,12 +341,24 @@ void gameUI::playLayer()
                 saveInput->Render() | flex
             }) | border | color(Color::Yellow);
         }
+        else if (m_IsLoading) {
+            saveArea = hbox({
+                text("Load from file: "),
+                saveInput->Render() | flex
+            }) | border | color(Color::Yellow);
+        }
         else {
             if (!m_SaveNotif.empty()) {
                 saveArea = text(m_SaveNotif) | center | color(Color::Green);
             }
             else {
-                saveArea = text("Press \"l\" to save game, press \"q\" to exit") | center | dim;
+                saveArea = hbox({
+                    text(" Press \"l\" to save game "),
+                    separator() | dim,
+                    text(" Press \"t\" to load from saved games "),
+                    separator() | dim,
+                    text(" Press \"q\" to exit ")
+                    }) | center | dim;
             }
         }
 

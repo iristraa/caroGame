@@ -55,6 +55,7 @@ private:
 	std::string m_Message;
 
 	bool m_IsSaving = false;
+	bool m_IsLoading = false;
 	std::string m_SaveFileName = "";
 	std::string m_SaveNotif = "";
 

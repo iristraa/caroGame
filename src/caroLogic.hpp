@@ -29,10 +29,12 @@ public:
 	bool setCell(int, int);
 	int getCell(int, int);
 	playerState getTurn();
+	int getTurnsTaken();
 
 	caroState gameState();
 
-	void saveState(const std::filesystem::path &);
+	int saveState(const std::filesystem::path &);
+	int loadState(const std::filesystem::path&);
 
 	// playerState m_Turn = playerState::PLAYER_ONE;
 private:
@@ -46,4 +48,6 @@ private:
 	int m_BoardCol = 0;
 
 	playerState m_Turn = playerState::PLAYER_ONE;
+
+	int m_TurnsTaken = 1;
 };

@@ -11,7 +11,7 @@ void caroLogic::getBoardSize(int boardRow, int boardCol) {
 
 void caroLogic::resetBoard() {
 	m_Board.clear();
-
+	m_TurnsTaken = 1;
 	m_Turn = playerState::PLAYER_ONE;
 }
 
@@ -42,12 +42,17 @@ bool caroLogic::setCell(int r, int c) {
 			m_Board[r][c] = 2;
 			m_Turn = playerState::PLAYER_ONE;
 		}
+		m_TurnsTaken++;
 		return 1;
 	}
 }
 
 playerState caroLogic::getTurn() {
 	return m_Turn;
+}
+
+int caroLogic::getTurnsTaken() {
+	return m_TurnsTaken;
 }
 
 int caroLogic::countInDirection(int row, int col, int drow, int dcol, int player) {
@@ -105,15 +110,17 @@ caroState caroLogic::gameState() {
 	return caroState::ONGOING;
 }
 
-void caroLogic::saveState(const std::filesystem::path& filename) {
+int caroLogic::saveState(const std::filesystem::path& filename) {
 	std::ofstream saveFile(filename);
 
 	if (!saveFile.is_open()) {
-		return;
+		return -1;
 	}
 
 	saveFile << m_BoardRow << " ";
-	saveFile << m_BoardCol << " " << std::endl;
+	saveFile << m_BoardCol << " ";
+	saveFile << m_TurnsTaken << " " << std::endl;
+	saveFile << std::endl;
 	for (auto x : m_Board) {
 		for (auto y : x) {
 			saveFile << y << " ";
@@ -122,4 +129,27 @@ void caroLogic::saveState(const std::filesystem::path& filename) {
 	}
 
 	saveFile.close();
+	return 0;
+}
+
+int caroLogic::loadState(const std::filesystem::path& filename) {
+	std::ifstream saveFile(filename);
+	
+	if (!saveFile.is_open()) {
+		return -1;
+	}
+
+	saveFile.seekg(0, std::ifstream::beg);
+
+	if (saveFile >> m_BoardRow >> m_BoardCol) initBoard();
+	else return -2;
+	saveFile >> m_TurnsTaken;
+	if (m_TurnsTaken % 2 == 0) m_Turn = playerState::PLAYER_TWO;
+	for (int i = 0; i < m_BoardRow; ++i) {
+		for (int j = 0; j < m_BoardCol; ++j) {
+			saveFile >> m_Board[i][j];
+		}
+	}
+	
+	return 0;
 }
