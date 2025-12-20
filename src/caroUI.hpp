@@ -61,4 +61,7 @@ private:
 	const std::filesystem::path m_SaveDirectory = "saves/";
 
 	std::unique_ptr<caroLogic> m_pCaroLogic = std::make_unique<caroLogic>();
+
+	ma_result audioResult;
+	ma_engine audioEngine;
 };

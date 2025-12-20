@@ -316,6 +316,11 @@ void gameUI::playLayer()
 
 void gameUI::runGame() {
     createDir(m_SaveDirectory);
+    audioResult = ma_engine_init(NULL, &audioEngine);
+    if (audioResult != MA_SUCCESS) {
+        std::cerr << "Failed to initialize audio engine" << std::endl;
+        return;
+    }
 	while (m_Running) {
 		switch (m_State) {
 		case appState::MAIN_MENU: mainMenuLayer(); break;
@@ -323,4 +328,5 @@ void gameUI::runGame() {
         case appState::INGAME: playLayer(); break;
 		}
 	}
+    ma_engine_uninit(&audioEngine);
 }

@@ -1,3 +1,4 @@
+#define MINIAUDIO_IMPLEMENTATION
 #include "caroUI.hpp"
 
 int main()
