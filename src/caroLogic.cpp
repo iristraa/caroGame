@@ -104,3 +104,22 @@ caroState caroLogic::gameState() {
 	if (isDraw()) return caroState::DRAW;
 	return caroState::ONGOING;
 }
+
+void caroLogic::saveState(const std::filesystem::path& filename) {
+	std::ofstream saveFile(filename);
+
+	if (!saveFile.is_open()) {
+		return;
+	}
+
+	saveFile << m_BoardRow << " ";
+	saveFile << m_BoardCol << " " << std::endl;
+	for (auto x : m_Board) {
+		for (auto y : x) {
+			saveFile << y << " ";
+		}
+		saveFile << std::endl;
+	}
+
+	saveFile.close();
+}

@@ -4,6 +4,8 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <filesystem>
 
 enum class playerState {
 	PLAYER_ONE,
@@ -30,7 +32,7 @@ public:
 
 	caroState gameState();
 
-
+	void saveState(const std::filesystem::path &);
 
 	// playerState m_Turn = playerState::PLAYER_ONE;
 private:

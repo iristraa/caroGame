@@ -33,6 +33,8 @@ public:
 
 	void runGame();
 private:
+	void createDir(const std::filesystem::path&);
+
 	void mainMenuLayer();
 	void aboutLayer();
 	void playLayer();
@@ -55,6 +57,8 @@ private:
 	bool m_IsSaving = false;
 	std::string m_SaveFileName = "";
 	std::string m_SaveNotif = "";
+
+	const std::filesystem::path m_SaveDirectory = "saves/";
 
 	std::unique_ptr<caroLogic> m_pCaroLogic = std::make_unique<caroLogic>();
 };

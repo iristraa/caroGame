@@ -4,6 +4,13 @@ gameUI::gameUI() {
 
 }
 
+void gameUI::createDir(const std::filesystem::path& dir) 
+{
+    if (!std::filesystem::exists(dir)) {
+        std::filesystem::create_directory(dir);
+    }
+}
+
 std::string gameUI::getTitleScreen()
 {
     std::ifstream file("Resources/title.txt");
@@ -192,7 +199,7 @@ void gameUI::playLayer()
             if (e == Event::Return) {
                 if (m_SaveFileName.empty()) m_SaveNotif = "Error: Filename cannot be empty!";
                 else {
-                    // save function here
+                    m_pCaroLogic->saveState(m_SaveDirectory / m_SaveFileName);
 
                     m_SaveNotif = "Game saved to " + m_SaveFileName + " successfully!";
                     m_IsSaving = false;
@@ -308,6 +315,7 @@ void gameUI::playLayer()
 }
 
 void gameUI::runGame() {
+    createDir(m_SaveDirectory);
 	while (m_Running) {
 		switch (m_State) {
 		case appState::MAIN_MENU: mainMenuLayer(); break;
