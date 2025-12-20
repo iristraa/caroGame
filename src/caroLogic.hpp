@@ -23,7 +23,7 @@ class caroLogic {
 public:
 	caroLogic();
 
-	void getBoardSize(int, int);
+	void getBoardSize(int, int, int);
 	void initBoard();
 	void resetBoard();
 	bool setCell(int, int);
@@ -33,7 +33,11 @@ public:
 
 	caroState gameState();
 
-	int saveState(const std::filesystem::path &);
+	int returnBoardRow();
+	int returnBoardCol();
+	int returnBoardKVal();
+
+	int saveState(const std::filesystem::path&);
 	int loadState(const std::filesystem::path&);
 
 	// playerState m_Turn = playerState::PLAYER_ONE;
@@ -46,6 +50,7 @@ private:
 
 	int m_BoardRow = 0;
 	int m_BoardCol = 0;
+	int m_BoardkVal = 0;
 
 	playerState m_Turn = playerState::PLAYER_ONE;
 

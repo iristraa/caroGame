@@ -45,9 +45,14 @@ void gameUI::mainMenuLayer()
             m_Screen.Exit();
         }
         else if (menu_entries[selected] == "Play") {
-            m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum);
+            m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum, m_kValue);
             m_pCaroLogic->initBoard();
+            m_SaveNotif = "";
             m_State = appState::INGAME;
+            m_Screen.Exit();
+        }
+        else if (menu_entries[selected] == "Settings") {
+            m_State = appState::SETTINGS;
             m_Screen.Exit();
         }
         else if (menu_entries[selected] == "Quit")
@@ -135,11 +140,105 @@ void gameUI::aboutLayer()
     m_Screen.Loop(screen_a_renderer);
 }
 
+void gameUI::settingsLayer()
+{
+    auto Wrap = [&](std::string name, Component component) {
+        return Renderer(component, [name, component] {
+            return hbox({
+                       text(name) | size(WIDTH, GREATER_THAN, 30),
+                       separator(),
+                       component->Render() | xflex,
+                }) |
+                xflex;
+            });
+    };
+
+    std::string lengthN;
+    auto inputN = Input(&lengthN, std::to_string(m_RowNum));
+    inputN = Wrap("Length M of graph", inputN);
+
+    inputN |= CatchEvent([&](Event event) {
+        if (event == Event::Return) return true;
+        return event.is_character() && !std::isdigit(event.character()[0]);
+        });
+
+    std::string widthM;
+    auto inputM = Input(&widthM, std::to_string(m_ColNum));
+    inputM = Wrap("Width N of graph", inputM);
+
+    inputM |= CatchEvent([&](Event event) {
+        if (event == Event::Return) return true;
+        return event.is_character() && !std::isdigit(event.character()[0]);
+        });
+
+    std::string valueK;
+    auto inputK = Input(&valueK, std::to_string(m_kValue));
+    inputK = Wrap("K in a row to win", inputK);
+
+    inputK |= CatchEvent([&](Event event) {
+        if (event == Event::Return) return true;
+        return event.is_character() && !std::isdigit(event.character()[0]);
+        });
+
+    int selected = 0;
+    std::vector<std::string> menu_entries = {
+        "Save & Exit"
+    };
+
+    MenuOption option;
+    option.on_enter = [&] {
+        if (menu_entries[selected] == "Save & Exit") {
+            if (!lengthN.empty()) m_RowNum = std::stoi(lengthN);
+            if (!widthM.empty()) m_ColNum = std::stoi(widthM);
+            if (!valueK.empty()) m_kValue = std::stoi(valueK);
+            m_State = appState::MAIN_MENU;
+            m_Screen.ExitLoopClosure()();
+        }
+        };
+
+    auto menu = Menu(&menu_entries, &selected, option);
+
+    auto layout = Container::Vertical({
+        inputN,
+        inputM,
+        inputK,
+        menu
+    });
+
+    auto interact = CatchEvent(layout, [&](Event event) {
+
+        if (event == Event::Character('q') || event == Event::Character('Q')) {
+            m_State = appState::MAIN_MENU;
+            m_Screen.ExitLoopClosure()();
+            return true;
+        }
+
+        return layout->OnEvent(event);  // Forward events normally
+    });
+
+    auto renderer = Renderer(interact, [&] {
+        return vbox({
+            inputN->Render(),
+            separator(),
+            inputM->Render(),
+            separator(),
+            inputK->Render(),
+            separator(),
+            text(" ") | flex,
+            separator(),
+            menu->Render()
+            }) | border;
+        });
+
+    m_Screen.Loop(renderer);
+
+}
+
 void gameUI::playLayer()
 {
     caroState curGamestate = m_pCaroLogic->gameState();
 
-    m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum);
+    m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum, m_kValue);
 
     std::vector<std::vector<Component>> grid(m_RowNum, std::vector<Component>(m_ColNum));
 
@@ -174,9 +273,10 @@ void gameUI::playLayer()
                 int curCell = m_pCaroLogic->getCell(i, j);
                 if (curCell == 1) renderE |= color(Color::Blue);
                 else if (curCell == 2) renderE |= color(Color::Red);
+                else if (!focused) renderE |= dim;
 
                 if (focused) {
-                    renderE = renderE | bold | inverted;
+                    renderE = renderE | bold;
                 }
 
                 rowElements.push_back(renderE);
@@ -239,15 +339,13 @@ void gameUI::playLayer()
                         m_IsLoading = false;
                         m_SaveFileName = "";
                     }
-                    else if (m_pCaroLogic->loadState(m_SaveDirectory / m_SaveFileName) == -2) {
-                        m_SaveNotif = "Something went seriously wrong...";
-                        m_IsLoading = false;
-                        m_SaveFileName = "";
-                    }
                     else {
                         m_SaveNotif = "Game loaded from \"" + m_SaveFileName + "\" successfully!";
                         m_IsLoading = false;
                         m_SaveFileName = "";
+                        m_RowNum = m_pCaroLogic->returnBoardRow();
+                        m_ColNum = m_pCaroLogic->returnBoardCol();
+                        m_kValue = m_pCaroLogic->returnBoardKVal();
                         m_Screen.ExitLoopClosure()();
                     }
                 }
@@ -383,6 +481,7 @@ void gameUI::runGame() {
 		switch (m_State) {
 		case appState::MAIN_MENU: mainMenuLayer(); break;
         case appState::ABOUT: aboutLayer(); break;
+        case appState::SETTINGS: settingsLayer(); break;
         case appState::INGAME: playLayer(); break;
 		}
 	}

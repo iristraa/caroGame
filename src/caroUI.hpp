@@ -17,6 +17,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <functional>
 
 using namespace ftxui;
 
@@ -38,7 +39,7 @@ private:
 	void mainMenuLayer();
 	void aboutLayer();
 	void playLayer();
-	// ftxui::Component aboutLayer();
+	void settingsLayer();
 
 	std::string getTitleScreen();
 private:
@@ -48,6 +49,7 @@ private:
 
 	int m_RowNum = 8;
 	int m_ColNum = 8;
+	int m_kValue = 4;
 
 	int focusRow = 0;
 	int focusCol = 0;
