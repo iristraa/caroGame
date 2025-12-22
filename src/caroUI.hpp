@@ -41,7 +41,7 @@ private:
 	void playLayer();
 	void settingsLayer();
 
-	std::string getTitleScreen();
+	std::string getStringFromFile(std::filesystem::path&);
 private:
 	ftxui::ScreenInteractive m_Screen = ftxui::ScreenInteractive::Fullscreen();
 	appState m_State = appState::MAIN_MENU;

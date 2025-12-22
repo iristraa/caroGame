@@ -11,9 +11,9 @@ void gameUI::createDir(const std::filesystem::path& dir)
     }
 }
 
-std::string gameUI::getTitleScreen()
+std::string gameUI::getStringFromFile(std::filesystem::path& dir)
 {
-    std::ifstream file("Resources/title.txt");
+    std::ifstream file(dir);
     if (!file) {
         std::cerr << "Error: Could not open title.txt\n";
         return std::filesystem::current_path().string();
@@ -32,11 +32,17 @@ void gameUI::mainMenuLayer()
 {
     int selected = 0;
     std::vector<std::string> menu_entries = {
-        "Play",
+        "New Game",
+        "Load Game",
         "Settings",
         "About",
         "Quit"
     };
+
+    auto gradient = LinearGradient()
+        .Angle(180)
+        .Stop(Color::Red)
+        .Stop(Color::Blue);
 
     MenuOption option;
     option.on_enter = [&] {
@@ -44,7 +50,7 @@ void gameUI::mainMenuLayer()
             m_State = appState::ABOUT;
             m_Screen.Exit();
         }
-        else if (menu_entries[selected] == "Play") {
+        else if (menu_entries[selected] == "New Game") {
             m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum, m_kValue);
             m_pCaroLogic->initBoard();
             m_SaveNotif = "";
@@ -57,7 +63,7 @@ void gameUI::mainMenuLayer()
         }
         else if (menu_entries[selected] == "Quit")
             m_Running = false;
-            m_Screen.Exit();
+        m_Screen.Exit();
         };
 
     auto menu = Menu(&menu_entries, &selected, option);
@@ -66,16 +72,80 @@ void gameUI::mainMenuLayer()
         menu,
         });
 
-    std::string titleScreen = getTitleScreen();
+    std::filesystem::path titleScreenDir = "Resources/title.txt";
+    std::string titleScreen = getStringFromFile(titleScreenDir);
+
+    std::filesystem::path xDir = "Resources/X.txt";
+    std::string xTitleScreen = getStringFromFile(xDir);
+
+    std::filesystem::path oDir = "Resources/O.txt";
+    std::string oTitleScreen = getStringFromFile(oDir);
+
+    auto asciiHelper = [&](std::string input) {
+        Elements lines;
+        std::stringstream ss(input);
+        std::string line;
+        while (std::getline(ss, line)) {
+            lines.push_back(text(line));
+        }
+        return vbox(lines);
+    };
 
     auto menu_renderer = Renderer(menuWrapped, [&] {
         Element content = vbox({
             // text("Use arrow keys to navigate, Enter to select"),
             // separator(),
-            paragraph(titleScreen) | center | flex,
-            menuWrapped->Render() | border | size(WIDTH, EQUAL, 25) | center | flex,
+            hbox({
+                // asciiHelper(xTitleScreen) | center | flex | border,
+                vbox({
+                    text("Y88b   d88P"),
+                    text(" Y88b d88P "),
+                    text("  Y88o88P  "),
+                    text("   Y888P   "),
+                    text("   d888b   "),
+                    text("  d88888b  "),
+                    text(" d88P Y88b "),
+                    text("d88P   Y88b")
+                }) | center | flex | borderDouble | color(Color::Blue),
+                
+                vbox({
+                    vbox({
+                        text(" "),
+                        hbox({
+                            text(" "),
+                            paragraph(titleScreen),
+                            text(" ")
+                        }),
+                        text(" ")
+                    }) | color(gradient) | borderDashed | center,
+                    text(" "),
+                    menuWrapped->Render() | border | size(WIDTH, EQUAL, 25) | center
+                }) | flex | center,
+                vbox({
+                    text("  .d88888b.  "),
+                    text(" d88P\" \"Y88b "),
+                    text(" 888     888 "),
+                    text(" 888     888 "),
+                    text(" 888     888 "),
+                    text(" 888     888 "),
+                    text(" Y88b. .d88P "),
+                    text("  \"Y88888P\"  ")
+                }) | center | flex | borderDouble | color(Color::Red),
+                // asciiHelper(oTitleScreen) | center | flex | border
+            }) | flex,
             separator(),
-            text("Selected: " + menu_entries[selected])
+            hbox({
+                hbox({
+                    text("Selected: " + menu_entries[selected]),
+                    filler()
+                }) | flex,
+                separator(),
+                hbox({
+                    filler(),
+                    text("25C10 - Group 12")
+                }) | flex
+            })
+            
             });
         return content | border;
         });
