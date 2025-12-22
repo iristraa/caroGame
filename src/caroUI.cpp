@@ -51,6 +51,8 @@ void gameUI::mainMenuLayer()
             m_Screen.Exit();
         }
         else if (menu_entries[selected] == "New Game") {
+            playerXpoints = 0;
+            playerYpoints = 0;
             m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum, m_kValue);
             m_pCaroLogic->initBoard();
             m_SaveNotif = "";
@@ -72,6 +74,16 @@ void gameUI::mainMenuLayer()
         menu,
         });
 
+    auto menuWrappedInteractive = CatchEvent(menuWrapped, [&](Event event) {
+        // audio.playSFX("Resources/hover.wav");
+
+        if (event == Event::Return) {
+            audio.playSFX("Resources/select.wav");
+        }
+
+        return menuWrapped->OnEvent(event);
+        });
+
     std::filesystem::path titleScreenDir = "Resources/title.txt";
     std::string titleScreen = getStringFromFile(titleScreenDir);
 
@@ -91,7 +103,7 @@ void gameUI::mainMenuLayer()
         return vbox(lines);
     };
 
-    auto menu_renderer = Renderer(menuWrapped, [&] {
+    auto menu_renderer = Renderer(menuWrappedInteractive, [&] {
         Element content = vbox({
             // text("Use arrow keys to navigate, Enter to select"),
             // separator(),
@@ -250,6 +262,15 @@ void gameUI::settingsLayer()
         return event.is_character() && !std::isdigit(event.character()[0]);
         });
 
+    int sfxVolume = curSFXVol;
+    auto sfxSlider = Slider("", &sfxVolume, 0, 100, 1);
+    sfxSlider = Wrap("SFX Volume", sfxSlider);
+
+    int bgmVolume = curBGMVol;
+    auto bgmSlider = Slider("", &bgmVolume, 0, 100, 1);
+    bgmSlider = Wrap("BGM Volume", bgmSlider);
+
+
     int selected = 0;
     std::vector<std::string> menu_entries = {
         "Save & Exit"
@@ -261,6 +282,10 @@ void gameUI::settingsLayer()
             if (!lengthN.empty()) m_RowNum = std::stoi(lengthN);
             if (!widthM.empty()) m_ColNum = std::stoi(widthM);
             if (!valueK.empty()) m_kValue = std::stoi(valueK);
+            audio.setSFXVolume((float)sfxVolume / 100.0);
+            curSFXVol = sfxVolume;
+            audio.setBGMVolume((float)bgmVolume / 100.0);
+            curBGMVol = bgmVolume;
             m_State = appState::MAIN_MENU;
             m_Screen.ExitLoopClosure()();
         }
@@ -272,6 +297,8 @@ void gameUI::settingsLayer()
         inputN,
         inputM,
         inputK,
+        sfxSlider,
+        bgmSlider,
         menu
     });
 
@@ -294,6 +321,10 @@ void gameUI::settingsLayer()
             separator(),
             inputK->Render(),
             separator(),
+            sfxSlider->Render(),
+            separator(),
+            bgmSlider->Render(),
+            separator(),
             text(" ") | flex,
             separator(),
             menu->Render()
@@ -308,7 +339,9 @@ void gameUI::playLayer()
 {
     caroState curGamestate = m_pCaroLogic->gameState();
 
-    if (curGamestate != caroState::ONGOING) audioResult = ma_engine_play_sound(&audioEngine, "Resources/achievement.wav", NULL);
+    if (curGamestate != caroState::ONGOING) audio.playSFX("Resources/achievement.wav");
+    if (curGamestate == caroState::PLAYER_ONE_WINS || curGamestate == caroState::DRAW) playerXpoints++;
+    if (curGamestate == caroState::PLAYER_TWO_WINS || curGamestate == caroState::DRAW) playerYpoints++;
 
     m_pCaroLogic->getBoardSize(m_RowNum, m_ColNum, m_kValue);
 
@@ -372,7 +405,7 @@ void gameUI::playLayer()
             if (e == Event::Return) {
                 if (m_SaveFileName.empty()) m_SaveNotif = "Error: Filename cannot be empty!";
                 else {
-                    if (m_pCaroLogic->saveState(m_SaveDirectory / m_SaveFileName) == -1) {
+                    if (m_pCaroLogic->saveState(m_SaveDirectory / m_SaveFileName, playerXpoints, playerYpoints) == -1) {
                         m_SaveNotif = "Error: Cannot open file!";
                         m_IsSaving = false;
                         m_SaveFileName = "";
@@ -406,7 +439,7 @@ void gameUI::playLayer()
             if (e == Event::Return) {
                 if (m_SaveFileName.empty()) m_SaveNotif = "Error: Filename cannot be empty!";
                 else {
-                    if (m_pCaroLogic->loadState(m_SaveDirectory / m_SaveFileName) == -1) {
+                    if (m_pCaroLogic->loadState(m_SaveDirectory / m_SaveFileName, playerXpoints, playerYpoints) == -1) {
                         m_SaveNotif = "Error: Cannot open file!";
                         m_IsLoading = false;
                         m_SaveFileName = "";
@@ -443,35 +476,43 @@ void gameUI::playLayer()
         if (curGamestate == caroState::ONGOING) {
             if (e == Event::ArrowRight) {
                 focusCol = (focusCol + 1) % m_ColNum;
+                audio.playSFX("Resources/hover.wav");
                 return true;
             }
             if (e == Event::ArrowLeft) {
                 focusCol = (focusCol - 1 + m_ColNum) % m_ColNum;
+                audio.playSFX("Resources/hover.wav");
                 return true;
             }
             if (e == Event::ArrowDown) {
                 focusRow = (focusRow + 1) % m_RowNum;
+                audio.playSFX("Resources/hover.wav");
                 return true;
             }
             if (e == Event::ArrowUp) {
                 focusRow = (focusRow - 1 + m_RowNum) % m_RowNum;
+                audio.playSFX("Resources/hover.wav");
                 return true;
             }
 
             // Forward Enter to the selected button
             if (e == Event::Return || e == Event::Character(' ')) {
+                audio.playSFX("Resources/select.wav");
                 grid[focusRow][focusCol]->OnEvent(Event::Return);
                 return true;
             }
         }
 
         if (e == Event::Character('q') || e == Event::Character('Q')) {
+            audio.playSFX("Resources/hover.wav");
             m_State = appState::MAIN_MENU;
             m_Screen.ExitLoopClosure()();
             return true;
         }
 
         if (e == Event::Character('r') || e == Event::Character('R')) {
+            audio.playSFX("Resources/hover.wav");
+            m_SaveNotif = "";
             m_pCaroLogic->initBoard();
             m_Screen.ExitLoopClosure()();
             return true;
@@ -496,7 +537,9 @@ void gameUI::playLayer()
         return container;
     };
 
-    if (curGamestate == caroState::PLAYER_ONE_WINS) m_Message = "Player 1 (X) wins! Press \"r\" to reset board";
+    if (curGamestate == caroState::PLAYER_ONE_WINS) {
+        m_Message = "Player 1 (X) wins! Press \"r\" to reset board";
+    }
     else if (curGamestate == caroState::PLAYER_TWO_WINS) m_Message = "Player 2 (O) wins! Press \"r\" to reset board";
     else if (curGamestate == caroState::DRAW) m_Message = "Both players draw!";
     else {
@@ -533,23 +576,35 @@ void gameUI::playLayer()
             }
         }
 
-        return vbox({
-            gameMessageFormat(m_Message) | hcenter,
-            mainContainer->Render() | center | flex,
-            saveArea
-            }) | borderHeavy;
-        });
+        return hbox({
+            vbox({
+                vbox({
+                    text("Player 1 (X)") | color(Color::Blue),
+                    separator(),
+                    text("Current points: " + std::to_string(playerXpoints))
+                }) | border | size(HEIGHT, EQUAL, 8) | size(WIDTH, EQUAL, 20),
+                vbox({
+                    text("Player 2 (O)") | color(Color::Red),
+                    separator(),
+                    text("Current points: " + std::to_string(playerYpoints))
+                }) | border | size(HEIGHT, EQUAL, 8) | size(WIDTH, EQUAL, 20),
+            }) | vcenter,
+            vbox({
+                gameMessageFormat(m_Message) | hcenter | vcenter,
+                mainContainer->Render() | center | flex,
+                saveArea
+                })
+            }) | flex | center;
+
+
+        }) | borderHeavy;
 
     m_Screen.Loop(playScreenRender);
 }
 
 void gameUI::runGame() {
     createDir(m_SaveDirectory);
-    audioResult = ma_engine_init(NULL, &audioEngine);
-    if (audioResult != MA_SUCCESS) {
-        std::cerr << "Failed to initialize audio engine" << std::endl;
-        return;
-    }
+    audio.playBGM("Resources/bgm.mp3");
 	while (m_Running) {
 		switch (m_State) {
 		case appState::MAIN_MENU: mainMenuLayer(); break;
@@ -558,5 +613,4 @@ void gameUI::runGame() {
         case appState::INGAME: playLayer(); break;
 		}
 	}
-    ma_engine_uninit(&audioEngine);
 }

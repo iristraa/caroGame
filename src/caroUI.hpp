@@ -8,8 +8,8 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
-#include "miniaudio.h"
 #include "caroLogic.hpp"
+#include "caroSound.hpp"
 
 #include <vector>
 #include <string>
@@ -56,6 +56,9 @@ private:
 
 	std::string m_Message;
 
+	int playerXpoints = 0;
+	int playerYpoints = 0;
+
 	bool m_IsSaving = false;
 	bool m_IsLoading = false;
 	std::string m_SaveFileName = "";
@@ -65,6 +68,7 @@ private:
 
 	std::unique_ptr<caroLogic> m_pCaroLogic = std::make_unique<caroLogic>();
 
-	ma_result audioResult;
-	ma_engine audioEngine;
+	AudioSystem audio;
+	int curSFXVol = 100;
+	int curBGMVol = 100;
 };

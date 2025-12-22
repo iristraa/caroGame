@@ -21,7 +21,7 @@ FetchContent_Declare(ftxui
 FetchContent_MakeAvailable(ftxui)
 
 # Add source to this project's executable.
-add_executable (caroProject   "src/main.cpp" "src/caroUI.cpp" "src/caroLogic.cpp")
+add_executable (caroProject   "src/main.cpp" "src/caroUI.cpp" "src/caroLogic.cpp" "src/caroSound.cpp")
 target_link_libraries(caroProject
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom

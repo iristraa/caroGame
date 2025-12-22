@@ -37,8 +37,8 @@ public:
 	int returnBoardCol();
 	int returnBoardKVal();
 
-	int saveState(const std::filesystem::path&);
-	int loadState(const std::filesystem::path&);
+	int saveState(const std::filesystem::path&, int, int);
+	int loadState(const std::filesystem::path&, int&, int&);
 
 	// playerState m_Turn = playerState::PLAYER_ONE;
 private:
